@@ -30,6 +30,20 @@ app.post("/api/login", (req, res) => {
   res.json({ ok: true, user: u });
 });
 
+app.post("/api/register", (req, res) => {
+  try {
+    const name = String(req.body.username || '').trim().toLowerCase();
+    if (!/^[a-z0-9_.-]{2,32}$/.test(name)) throw new Error('username: 2-32 chars, letters/numbers/_/.-/ only');
+    if (!req.body.password || String(req.body.password).length < 4) throw new Error('password must be at least 4 characters');
+    const u = users.add(name, req.body.password, 'member');
+    req.session.authed = true;
+    req.session.user = u;
+    res.json({ ok: true, user: u });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message || 'could not create account' });
+  }
+});
+
 app.post("/api/logout", (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });

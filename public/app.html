@@ -36,6 +36,15 @@ code{background:#1a1f2b;padding:1px 6px;border-radius:4px;color:#9fb4d8}
 #login.show{display:flex}
 #login input{background:#1a1f2b;border:1px solid #2a2f3a;color:#e6e6e6;border-radius:8px;padding:10px 14px;font-size:14px;width:240px}
 #loginErr{color:#e06c75;font-size:12px}
+#signup{display:none;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px}
+#signup.show{display:flex}
+#signup input{background:#1a1f2b;border:1px solid #2a2f3a;color:#e6e6e6;border-radius:8px;padding:10px 14px;font-size:14px;width:240px}
+#signupErr{color:#e06c75;font-size:12px;max-width:260px;text-align:center}
+.meter{width:240px;height:6px;background:#1a1f2b;border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;transition:all .2s}
+.field{position:relative;width:240px}
+.field .eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer;font-size:12px}
+.linkish{background:none;border:none;color:#61afef;cursor:pointer;font-size:12px;text-decoration:underline;padding:0}
 
 .tool-chip { display: inline-block; font-size: 11px; background: #2a2f3a; border: 1px solid #3a404c;
   border-radius: 10px; padding: 1px 8px; margin: 2px 4px 2px 0; color: #9fb3c8; }
@@ -52,6 +61,21 @@ code{background:#1a1f2b;padding:1px 6px;border-radius:4px;color:#9fb4d8}
   <input id="pw" type="password" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
   <button onclick="login()">Sign in</button>
   <div id="loginErr"></div>
+  <button class="linkish" onclick="showSignup()">New here? Create an account</button>
+</div>
+
+<div id="signup">
+  <h2 style="font-size:16px">Create your account</h2>
+  <input id="nuser" placeholder="username (2-32, a-z 0-9 _ . -)" autocomplete="username" oninput="valUser()"/>
+  <div class="field"><input id="npw" type="password" placeholder="password (4+ chars)" oninput="meterPw()"/>
+  <button class="eye" type="button" onclick="togglePw('npw',this)">show</button></div>
+  <div class="meter"><i id="pwmeter"></i></div>
+  <div id="pwlabel" style="font-size:11px;color:#888"></div>
+  <div class="field"><input id="npw2" type="password" placeholder="confirm password" onkeydown="if(event.key==='Enter')register()"/>
+  <button class="eye" type="button" onclick="togglePw('npw2',this)">show</button></div>
+  <button onclick="register()" style="width:240px">Create account</button>
+  <div id="signupErr"></div>
+  <button class="linkish" onclick="showLogin()">Already have an account? Sign in</button>
 </div>
 
 <div id="shell" style="display:none;flex-direction:column;height:100vh">
@@ -133,6 +157,21 @@ function logout(){fetch("/api/logout",{method:"POST"}).then(()=>location.reload(
 (async function checkSession(){
   try{const r=await fetch("/api/me");if(r.ok){const j=await r.json();enterApp(j.user);}else showLogin();}catch(_){showLogin();}
 })();
+function showSignup(){document.getElementById("login").classList.remove("show");document.getElementById("signup").classList.add("show");document.getElementById("loginErr").textContent="";}
+function showLogin(){document.getElementById("signup").classList.remove("show");document.getElementById("login").classList.add("show");document.getElementById("signupErr").textContent="";}
+function togglePw(id,btn){const el=document.getElementById(id);const hid=el.type==="password";el.type=hid?"text":"password";btn.textContent=hid?"hide":"show";}
+function valUser(){const v=document.getElementById("nuser").value;if(v&&!/^[a-zA-Z0-9_.-]{2,32}$/.test(v))document.getElementById("signupErr").textContent="username: 2-32 chars, letters/numbers/_/.- only";else if(document.getElementById("signupErr").textContent.startsWith("username"))document.getElementById("signupErr").textContent="";}
+function meterPw(){const v=document.getElementById("npw").value;let s=0;if(v.length>=4)s++;if(v.length>=8)s++;if(/[A-Z]/.test(v)&&/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;const m=document.getElementById("pwmeter"),l=document.getElementById("pwlabel");const lv=[["8%","#e06c75","Weak"],["30%","#e5c07b","Weak"],["55%","#d19a66","Okay"],["80%","#98c379","Good"],["100%","#98c379","Strong"]][s];m.style.width=lv[0];m.style.background=lv[1];l.textContent=v?lv[2]:"";}
+async function register(){
+  const u=document.getElementById("nuser").value.trim(),p=document.getElementById("npw").value,p2=document.getElementById("npw2").value,err=document.getElementById("signupErr");
+  if(!/^[a-zA-Z0-9_.-]{2,32}$/.test(u))return err.textContent="username: 2-32 chars, letters/numbers/_/.- only";
+  if(p.length<4)return err.textContent="password must be at least 4 characters";
+  if(p!==p2)return err.textContent="passwords do not match";
+  err.textContent="";
+  const r=await fetch("/api/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u,password:p})});
+  const j=await r.json();
+  if(j.ok){enterApp(j.user);}else err.textContent=j.error||"Could not create account";
+}
 function showLogin(){document.getElementById("login").classList.add("show");}
 
 async function toggleUsers(){
