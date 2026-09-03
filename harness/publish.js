@@ -1,11 +1,11 @@
 // Publish-to-your-own-sites connectors. Destinations live in
-// /data/selfhost-portal/data/publish-destinations.json (mounted volume, gitignored).
+// path.join(process.env.DATA_DIR || './data', 'publish-destinations.json') (mounted volume, gitignored).
 // Supported types: wordpress, ghost, github_page, webhook.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DEST_FILE = process.env.PUBLISH_DEST_FILE || '/data/selfhost-portal/data/publish-destinations.json';
+const DEST_FILE = process.env.PUBLISH_DEST_FILE || path.join(process.env.DATA_DIR || './data', 'publish-destinations.json');
 
 function loadDestinations() {
   try { return JSON.parse(fs.readFileSync(DEST_FILE, 'utf8')); }

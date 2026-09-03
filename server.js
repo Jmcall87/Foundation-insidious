@@ -203,7 +203,7 @@ app.post("/api/apps/:id/remove", async (req, res) => {
 
 // ---------- publish destinations ----------
 const publish = require('./harness/publish');
-const DEST_FILE = process.env.PUBLISH_DEST_FILE || path.join(process.env.DATA_DIR || '/data/selfhost-portal/data', 'publish-destinations.json');
+const DEST_FILE = process.env.PUBLISH_DEST_FILE || path.join(process.env.DATA_DIR || './data', 'publish-destinations.json');
 
 app.get("/api/publish/destinations", (req, res) => res.json(publish.listDestinations()));
 

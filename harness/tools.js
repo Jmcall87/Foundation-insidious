@@ -54,7 +54,7 @@ async function dockerAction(action, app) {
       Cmd: cfg.cmd,
       HostConfig: {
         PortBindings: portMap,
-        Binds: ['/data/selfhost-portal/data:/data'],
+        Binds: ['./data:/data'],
         ExtraHosts: ['host.docker.internal:host-gateway'],
         ...(cfg.kvm ? { Devices: [{ PathOnHost: '/dev/kvm', PathInContainer: '/dev/kvm', CgroupPermissions: 'rwm' }] } : {})
       }

@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DATA_DIR = process.env.DATA_DIR || '/data/selfhost-portal/data';
+const DATA_DIR = process.env.DATA_DIR || './data';
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 function load() {
