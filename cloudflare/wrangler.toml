@@ -1,7 +1,0 @@
-name = "foundation-insidious"
-main = "worker.js"
-compatibility_date = "2024-09-01"
-
-[[kv_namespaces]]
-binding = "KV"
-id = "05212d0c865240c58729f325f91bafe3"
