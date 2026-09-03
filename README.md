@@ -1,3 +1,9 @@
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Jmcall87/Foundation-insidious)
+
+**One-click deploy:** click the button, sign in with GitHub, set your `ADMIN_PASS` password, click *Apply*. Live in ~2 minutes.
+
+--- 
+
 ---
 title: Foundation Insidious
 emoji: 🚀
