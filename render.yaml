@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: foundation-insidious
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: sh start.sh
+    healthCheckPath: /
+    envVars:
+      - key: ADMIN_USER
+        value: admin
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_PASS
+        sync: false

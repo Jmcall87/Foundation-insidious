@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Selfhost Portal — your cloud, your rules</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,sans-serif;background:#0f1117;color:#e6e6e6;line-height:1.6}
+header{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid #222a38;position:sticky;top:0;background:rgba(15,17,23,.92);backdrop-filter:blur(6px)}
+header h1{font-size:16px}
+header nav{margin-left:auto;display:flex;gap:18px}
+header nav a{color:#9fb4d8;text-decoration:none;font-size:14px}
+header nav a:hover{color:#fff}
+.btn{display:inline-block;background:#2b4c8c;color:#fff;text-decoration:none;padding:10px 22px;border-radius:9px;font-size:14.5px}
+.btn:hover{filter:brightness(1.15)}
+.btn.ghost{background:transparent;border:1px solid #3a404c;color:#c7cdd9}
+.hero{padding:90px 28px 70px;max-width:880px;margin:0 auto;text-align:center}
+.hero h2{font-size:40px;line-height:1.15;margin-bottom:18px}
+.hero h2 em{color:#5b8def;font-style:normal}
+.hero p{color:#aab3c5;font-size:17px;max-width:640px;margin:0 auto 30px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;max-width:1020px;margin:0 auto;padding:20px 28px 70px}
+.card{background:#161a23;border:1px solid #262c3a;border-radius:14px;padding:22px}
+.card h3{font-size:16px;margin-bottom:8px}
+.card p{font-size:13.5px;color:#9aa3b5}
+.card .tag{display:inline-block;font-size:11px;color:#81c784;border:1px solid #2e7d32;border-radius:8px;padding:0 8px;margin-top:10px}
+section.band{border-top:1px solid #222a38;border-bottom:1px solid #222a38;background:#12151d;padding:46px 28px;text-align:center}
+section.band p{max-width:680px;margin:0 auto;color:#aab3c5;font-size:15px}
+footer{padding:26px 28px;color:#5c657a;font-size:12.5px;text-align:center}
+footer a{color:#9fb4d8}
+@media(max-width:640px){.hero h2{font-size:28px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#9889; Selfhost Portal</h1>
+  <nav>
+    <a href="#apps">Apps</a>
+    <a href="#agent">Agent</a>
+    <a href="#publish">Publish</a>
+    <a class="btn" href="/app">Sign in</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h2>Your own cloud.<br/><em>One website.</em> One click.</h2>
+  <p>A self-hosted workspace with a real Windows VM, a browser, and a terminal —
+     all inside one website, driven by a chat agent that can deploy apps and
+     publish content to your own sites.</p>
+  <a class="btn" href="/app">Open the portal &rarr;</a>
+</div>
+
+<div class="grid" id="apps">
+  <div class="card"><h3>&#128421; Windows VM</h3><p>A full Windows desktop in your browser tab — real applications, real terminal. KVM-accelerated.</p><span class="tag">one-click deploy</span></div>
+  <div class="card"><h3>&#129520; ReactOS</h3><p>The fully open-source Windows-compatible OS. Lightweight, fast to boot, FOSS to the core.</p><span class="tag">one-click deploy</span></div>
+  <div class="card"><h3>&#127760; Browser-in-browser</h3><p>A shared Firefox desktop streamed to the site — use the web inside your cloud.</p><span class="tag">one-click deploy</span></div>
+  <div class="card"><h3>&#9000; Terminal</h3><p>A real shell on your server, right in the page. For the moments a GUI is too slow.</p><span class="tag">one-click deploy</span></div>
+</div>
+
+<section class="band" id="agent">
+  <p><b>Chat is the control room.</b> Type "deploy windows" and it deploys.
+     Ask the built-in agent to run tools, connect hundreds of services through
+     MCP integrations, use any LLM you like (OpenAI, DeepSeek, local models via
+     Ollama) — your keys, your server, no middleman.</p>
+</section>
+
+<div class="grid" id="publish">
+  <div class="card"><h3>&#128227; Publish anywhere you own</h3><p>Post content from chat straight to WordPress, Ghost, GitHub Pages, or your own webhook endpoints.</p></div>
+  <div class="card"><h3>&#128101; Built for your group</h3><p>Multi-user accounts with roles. Admins manage users; members deploy and chat.</p></div>
+  <div class="card"><h3>&#128274; Self-hosted &amp; private</h3><p>Everything runs on your machine behind Cosmos or Casa OS. No external service sees your data.</p></div>
+</div>
+
+<footer>Selfhost Portal — free, open-source, self-hosted. <a href="/app">Sign in</a></footer>
+</body>
+</html>

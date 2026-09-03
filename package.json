@@ -1,0 +1,12 @@
+{
+  "name": "selfhost-portal",
+  "version": "1.0.0",
+  "description": "One-click self-hosting portal with chat-controlled Windows VM",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.19.0",
+    "dockerode": "^4.0.0",
+    "express-session": "^1.18.0"
+  }
+}

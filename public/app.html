@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Selfhost Portal</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,sans-serif;background:#0f1117;color:#e6e6e6;height:100vh;display:flex;flex-direction:column}
+header{padding:10px 16px;background:#161a23;border-bottom:1px solid #2a2f3a;display:flex;align-items:center;gap:12px}
+header h1{font-size:15px}
+header .status{font-size:12px;color:#8b93a7}
+main{flex:1;display:flex;min-height:0}
+#chatPane{width:380px;min-width:320px;border-right:1px solid #2a2f3a;display:flex;flex-direction:column;background:#12151d}
+#chatLog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:85%;padding:8px 12px;border-radius:10px;font-size:13.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.msg.user{align-self:flex-end;background:#2b4c8c}
+.msg.bot{align-self:flex-start;background:#1e2430}
+#chatForm{display:flex;gap:8px;padding:12px;border-top:1px solid #2a2f3a}
+#chatInput{flex:1;background:#1a1f2b;border:1px solid #2a2f3a;color:#e6e6e6;border-radius:8px;padding:9px 12px;font-size:13.5px}
+#chatInput:focus{outline:none;border-color:#3b6db4}
+button{background:#2b4c8c;border:none;color:#fff;border-radius:8px;padding:9px 14px;cursor:pointer;font-size:13.5px}
+button:hover{filter:brightness(1.15)}
+#appPane{flex:1;display:flex;flex-direction:column;min-width:0}
+#appTabs{display:flex;gap:6px;padding:8px 12px;background:#12151d;border-bottom:1px solid #2a2f3a;flex-wrap:wrap}
+.tab{background:#1e2430;border:1px solid #2a2f3a;border-radius:8px;padding:6px 12px;font-size:12.5px;color:#c7cdd9;cursor:pointer;display:flex;align-items:center}
+.tab.active{background:#2b4c8c;color:#fff;border-color:#3b6db4}
+.tab .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:#666}
+.tab .dot.running{background:#3ecf6e}
+.tab .openBtn{font-size:11px;padding:2px 6px;margin-left:8px;background:#0f1117;border:1px solid #2a2f3a;color:#9fb4d8}
+#appView{flex:1;min-height:0}
+#appView iframe{width:100%;height:100%;border:none;background:#000}
+.placeholder{display:flex;align-items:center;justify-content:center;height:100%;color:#5c657a;font-size:14px;text-align:center;padding:20px;flex-direction:column;gap:6px}
+code{background:#1a1f2b;padding:1px 6px;border-radius:4px;color:#9fb4d8}
+#login{display:none;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px}
+#login.show{display:flex}
+#login input{background:#1a1f2b;border:1px solid #2a2f3a;color:#e6e6e6;border-radius:8px;padding:10px 14px;font-size:14px;width:240px}
+#loginErr{color:#e06c75;font-size:12px}
+
+.tool-chip { display: inline-block; font-size: 11px; background: #2a2f3a; border: 1px solid #3a404c;
+  border-radius: 10px; padding: 1px 8px; margin: 2px 4px 2px 0; color: #9fb3c8; }
+.tool-chip.ok { border-color: #2e7d32; color: #81c784; }
+.tool-chip.err { border-color: #c62828; color: #e57373; }
+.thinking { color: #888; animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .4; } }
+</style>
+</head>
+<body>
+<div id="login">
+  <h2 style="font-size:16px">Sign in to Selfhost Portal</h2>
+  <input id="user" placeholder="username" autocomplete="username"/>
+  <input id="pw" type="password" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
+  <button onclick="login()">Sign in</button>
+  <div id="loginErr"></div>
+</div>
+
+<div id="shell" style="display:none;flex-direction:column;height:100vh">
+  <header>
+    <h1>&#9889; Selfhost Portal</h1>
+    <span class="status" id="statusLine">connecting&hellip;</span>
+      <button id="pubBtn" onclick="togglePublish()">Publish</button>
+    <button id="usersBtn" onclick="toggleUsers()" style="display:none">Users</button>
+    <span class="status" id="userChip" style="margin-left:auto"></span>
+    <button onclick="logout()">Log out</button>
+  </header>
+  <main>
+    <div id="chatPane">
+      <div id="chatLog"></div>
+      <form id="chatForm">
+        <input id="chatInput" placeholder="type 'help' for commands" autocomplete="off"/>
+        <button id="sendBtn">Send</button>
+      </form>
+    </div>
+    <div id="appPane">
+      <div id="appTabs"></div>
+      <div id="appView"><div class="placeholder">Pick an app tab above, or deploy one from chat:<br/><code>deploy windows</code></div></div>
+    </div>
+  </main>
+</div>
+
+
+<div id="pubPanel" style="display:none;padding:12px;overflow:auto">
+  <h3>Publish destinations <small>(your own sites — agent can post here)</small></h3>
+  <div id="destList">loading&hellip;</div>
+  <h4>Add destination</h4>
+  <form id="destForm" onsubmit="return saveDest(event)">
+    <input name="name" placeholder="name (e.g. myblog)" required style="width:120px"/>
+    <select name="type" onchange="destTypeChanged()">
+      <option value="wordpress">WordPress</option>
+      <option value="ghost">Ghost</option>
+      <option value="github_page">Static site (GitHub)</option>
+      <option value="webhook">Custom site (webhook)</option>
+    </select>
+    <input name="site" placeholder="https://yoursite.com" style="width:220px"/>
+    <div id="destTypeFields" style="margin-top:6px"></div>
+    <button type="submit">Save</button>
+  </form>
+  <p><small>Secrets are stored server-side in the data volume, never shown in chat.</small></p>
+</div>
+
+<div id="usersPanel" style="display:none;padding:12px;overflow:auto">
+  <h3>Users <small>(admin only)</small></h3>
+  <div id="userList">loading&hellip;</div>
+  <h4>Add user</h4>
+  <form id="userForm" onsubmit="return addUser(event)">
+    <input name="username" placeholder="username" style="width:120px" required/>
+    <input name="password" type="password" placeholder="password" style="width:120px" required/>
+    <select name="role"><option value="member">member</option><option value="admin">admin</option></select>
+    <button type="submit">Add</button>
+  </form>
+</div>
+
+<script>
+const PORTMAP={windows:8006,reactos:8007,neko:8081,terminal:7681};
+const LABELS={windows:"Windows VM",reactos:"ReactOS",neko:"Browser",terminal:"Terminal"};
+let apps=[],activeTab=null;
+
+let ME=null;
+async function login(){
+  const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:document.getElementById("user").value,password:document.getElementById("pw").value})});
+  const j=await r.json();
+  if(j.ok){enterApp(j.user);}else document.getElementById("loginErr").textContent=j.error||"Login failed";
+}
+function enterApp(user){
+  ME=user;
+  document.getElementById("login").classList.remove("show");
+  document.getElementById("shell").style.display="flex";
+  document.getElementById("userChip").textContent=user.name+" ("+user.role+")";
+  document.getElementById("usersBtn").style.display=(user.role==="admin")?"":"none";
+  if(!ME._inited){ME._inited=true;init();}
+}
+function logout(){fetch("/api/logout",{method:"POST"}).then(()=>location.reload());}
+(async function checkSession(){
+  try{const r=await fetch("/api/me");if(r.ok){const j=await r.json();enterApp(j.user);}else showLogin();}catch(_){showLogin();}
+})();
+function showLogin(){document.getElementById("login").classList.add("show");}
+
+async function toggleUsers(){
+  const p=document.getElementById("usersPanel");const on=p.style.display==="none";
+  p.style.display=on?"block":"none";if(on)loadUsers();
+}
+async function loadUsers(){
+  const r=await fetch("/api/admin/users");const list=await r.json();
+  document.getElementById("userList").innerHTML=list.length?list.map(u=>
+    `<div>&bull; <b>${u.name}</b> (${u.role}) <button onclick="delUser('${u.name}')">remove</button> <button onclick="resetPw('${u.name}')">reset pw</button> <button onclick="toggleRole('${u.name}','${u.role}')">${u.role==="admin"?"demote":"promote"}</button></div>`).join("")
+    :"<i>no users?</i>";
+}
+async function addUser(ev){
+  ev.preventDefault();const f=new FormData(ev.target);const body={};
+  for(const[k,v]of f.entries())if(v)body[k]=v;
+  const r=await fetch("/api/admin/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json();if(!j.ok)alert(j.error);
+  ev.target.reset();loadUsers();return false;
+}
+async function delUser(name){
+  if(!confirm("Remove user "+name+"?"))return;
+  const r=await fetch("/api/admin/users/"+encodeURIComponent(name),{method:"DELETE"});
+  const j=await r.json();if(!j.ok)alert(j.error);loadUsers();
+}
+async function resetPw(name){
+  const pw=prompt("New password for "+name+":");if(!pw)return;
+  const r=await fetch("/api/admin/users/"+encodeURIComponent(name)+"/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+  const j=await r.json();if(!j.ok)alert(j.error);
+}
+async function toggleRole(name,role){
+  const nr=role==="admin"?"member":"admin";
+  const r=await fetch("/api/admin/users/"+encodeURIComponent(name)+"/role",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:nr})});
+  const j=await r.json();if(!j.ok)alert(j.error);loadUsers();
+}
+
+function renderTabs(){
+  const el=document.getElementById("appTabs");el.innerHTML="";
+  for(const a of apps){
+    const b=document.createElement("button");
+    b.className="tab"+(activeTab===a.id?" active":"");
+    b.innerHTML=`<span class="dot ${a.state}"></span>${LABELS[a.id]||a.name}`;
+    b.onclick=()=>selectApp(a.id);
+    el.appendChild(b);
+    if(a.state==="running"){
+      const o=document.createElement("button");
+      o.className="openBtn";o.textContent="\u2197";
+      o.onclick=e=>{e.stopPropagation();window.open(`http://${location.hostname}:${PORTMAP[a.id]}`,"_blank");};
+      b.appendChild(o);
+    }
+  }
+}
+
+function selectApp(id){
+  activeTab=id;
+  const app=apps.find(a=>a.id===id);
+  const view=document.getElementById("appView");
+  if(!app||app.state!=="running"){
+    view.innerHTML=`<div class="placeholder">${LABELS[id]} is not running.<br/>Deploy it from chat: <code>deploy ${id}</code></div>`;
+  }else{
+    view.innerHTML=`<iframe src="http://${location.hostname}:${PORTMAP[id]}"></iframe>`;
+  }
+  renderTabs();
+}
+
+function addMsg(cls,text){
+  const log=document.getElementById("chatLog");
+  const d=document.createElement("div");
+  d.className="msg "+cls;d.textContent=text;
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+
+async function pollApps(){
+  try{
+    const r=await fetch("/api/apps");apps=await r.json();
+    renderTabs();
+    if(activeTab)selectApp(activeTab);
+    const n=apps.filter(a=>a.state==="running").length;
+    document.getElementById("statusLine").textContent=`${n} app${n===1?"":"s"} running`;
+  }catch(_){}
+}
+
+async function sendChat(){
+  const inp=document.getElementById("chatInput");
+  const text=inp.value.trim();if(!text)return;
+  inp.value="";addMsg("user",text);
+  document.getElementById("sendBtn").disabled=true;
+  try{
+    const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+    const j=await r.json();
+    addMsg("bot",j.reply||JSON.stringify(j));
+    setTimeout(pollApps,1500);
+  }catch(e){addMsg("bot","error: "+e.message);}
+  document.getElementById("sendBtn").disabled=false;inp.focus();
+}
+
+async function init(){
+  document.getElementById("chatForm").onsubmit=e=>{e.preventDefault();sendChat();};
+  addMsg("bot","Welcome. Type 'help' to see commands.\nTry: deploy windows \u2014 then click the Windows VM tab to watch it boot.");
+  await pollApps();
+  setInterval(pollApps,5000);
+}
+
+const DEST_FIELDS = {
+  wordpress: [['site','Site URL'],['user','Username'],['appPassword','Application password']],
+  ghost: [['site','Site URL'],['adminKey','Admin API key (id:secret)']],
+  github_page: [['repo','owner/repo'],['branch','Branch (main)'],['pathTemplate','Post path (content/posts/{slug}.md)'],['baseUrl','Public URL (optional)'],['token','GitHub token']],
+  webhook: [['url','Webhook URL'],['bearerToken','Bearer token (optional)']]
+};
+function destTypeChanged(){
+  const t = document.forms.destForm.type.value;
+  document.getElementById('destTypeFields').innerHTML = DEST_FIELDS[t].map(([n,l]) =>
+    `<input name="${n}" placeholder="${l}" style="width:260px;display:block;margin-top:4px"/>`).join('');
+}
+async function loadDests(){
+  const r = await fetch('/api/publish/destinations'); const list = await r.json();
+  document.getElementById('destList').innerHTML = list.length
+    ? list.map(d => `<div>• <b>${d.name}</b> — ${d.type} (${d.site||''}) <button onclick="delDest('${d.name}')">remove</button></div>`).join('')
+    : '<i>none configured yet</i>';
+}
+function togglePublish(){
+  const p = document.getElementById('pubPanel');
+  const on = p.style.display === 'none';
+  p.style.display = on ? 'block' : 'none';
+  if(on){ destTypeChanged(); loadDests(); }
+}
+async function saveDest(ev){
+  ev.preventDefault();
+  const f = new FormData(ev.target); const body = {};
+  for (const [k,v] of f.entries()) if(v) body[k]=v;
+  await fetch('/api/publish/destinations', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  ev.target.reset(); destTypeChanged(); loadDests(); return false;
+}
+async function delDest(name){
+  await fetch('/api/publish/destinations/'+encodeURIComponent(name), {method:'DELETE'});
+  loadDests();
+}
+
+</script>
+</body>
+</html>
