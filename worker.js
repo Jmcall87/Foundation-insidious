@@ -33,6 +33,19 @@ header{display:flex;justify-content:space-between;align-items:center;padding:14p
 #login{max-width:340px;margin:90px auto;background:#121722;border:1px solid #1c2230;border-radius:12px;padding:28px}
 #login input{width:100%;padding:10px;margin:6px 0;background:#0b0e14;border:1px solid #2a3245;border-radius:8px;color:#e8eaf0}
 #login button{width:100%;padding:11px;margin-top:10px;background:#6c8cff;border:none;border-radius:8px;font-weight:700;color:#0b0e14}
+#signup{display:none;max-width:360px;margin:60px auto;background:#121722;border:1px solid #1c2230;border-radius:12px;padding:28px}
+#signup h2{margin-bottom:4px}
+#signup .sub{color:#9aa3b5;font-size:13px;margin-bottom:10px}
+#signup label{display:block;font-size:11px;color:#9aa3b5;margin:12px 0 3px;text-transform:uppercase;letter-spacing:.05em}
+#signup input{width:100%;padding:10px;margin:0;background:#0b0e14;border:1px solid #2a3245;border-radius:8px;color:#e8eaf0}
+#signup button.cta{width:100%;padding:11px;margin-top:16px;background:#6c8cff;border:none;border-radius:8px;font-weight:700;color:#0b0e14}
+.pwrap{position:relative}.pwrap .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9aa3b5;font-size:12px;padding:4px}
+.hint{font-size:11px;color:#5b6478;margin-top:3px}
+#meter{height:5px;background:#0b0e14;border-radius:3px;margin-top:6px;overflow:hidden}
+#meter i{display:block;height:100%;width:0;background:#ff7b7b;transition:width .2s,background .2s}
+#mlabel{font-size:11px;color:#9aa3b5;min-height:14px;margin:3px 0 4px}
+.swap{margin-top:14px;font-size:13px;color:#9aa3b5;text-align:center}
+.swap a{color:#6c8cff;cursor:pointer;text-decoration:underline}
 #dash{display:none;max-width:900px;margin:24px auto;padding:0 16px}
 .msgs{background:#121722;border:1px solid #1c2230;border-radius:12px;padding:16px;height:420px;overflow-y:auto;margin-bottom:10px}
 .m{margin:8px 0;padding:10px 14px;border-radius:10px;max-width:85%}.u{background:#6c8cff;color:#0b0e14;margin-left:auto}.a{background:#1c2230}
@@ -43,7 +56,18 @@ header{display:flex;justify-content:space-between;align-items:center;padding:14p
 <header><div class=logo>foundation<span>-insidious</span></div><button id=out style="display:none;background:none;border:1px solid #2a3245;color:#9aa3b5;border-radius:8px;padding:7px 14px">Log out</button></header>
 <div id=login><h2 style=margin-bottom:14px>Sign in</h2>
 <input id=u placeholder="Username"><input id=p type=password placeholder="Password">
-<button onclick=doLogin()>Sign in</button><button id=su style="background:none;border:1px solid #6c8cff;color:#6c8cff;margin-top:8px" onclick=doRegister()>Create account</button><div class=err id=lerr></div></div>
+<button onclick=doLogin()>Sign in</button><div class=swap style=margin-top:10px>New here? <a onclick=showSignup()>Create an account</a></div><div class=err id=lerr></div></div>
+<div id=signup><h2>Create your account</h2>
+<p class=sub>Free forever — full member access to the agent chat, GitHub self-hosting and the app catalog.</p>
+<label>Username</label><input id=nu placeholder="e.g. joshua" maxlength=24 autocomplete=username>
+<div class=hint>2&ndash;24 characters &mdash; letters, numbers, dash or underscore.</div>
+<label>Password</label><div class=pwrap><input id=np type=password placeholder="At least 6 characters" oninput=pwStrength() autocomplete=new-password><button type=button class=eye onclick=pwEye()>Show</button></div>
+<div id=meter><i></i></div><div id=mlabel></div>
+<label>Confirm password</label><input id=nc type=password placeholder="Type it again" autocomplete=new-password>
+<button class=cta onclick=doSignup()>Create account</button>
+<div class=err id=serr></div>
+<div class=swap>Already have an account? <a onclick=showLogin()>Sign in</a></div>
+</div>
 <div id=dash><div id=apps></div>
 <div style="background:#121722;border:1px solid #1c2230;border-radius:12px;padding:16px;margin:10px 0">
 <b style="font-size:14px">📦 Self-host a GitHub project</b>
@@ -58,13 +82,23 @@ header{display:flex;justify-content:space-between;align-items:center;padding:14p
 let me=null;
 async function j(url,opt){const r=await fetch(url,opt);const d=await r.json().catch(()=>({}));return{r,d}}
 async function boot(){const{r,d}=await j('/api/me');if(r.ok){me=d;entered()}else showLogin();loadApps()}
-function showLogin(){login.style.display='block';dash.style.display='none';out.style.display='none'}
+function showLogin(){signup.style.display='none';login.style.display='block';dash.style.display='none';out.style.display='none'}
 function entered(){login.style.display='none';dash.style.display='block';out.style.display='block';
 add('a','Welcome back, '+me.username+'. Ask me anything.');loadSites()}
 async function doLogin(){lerr.textContent='';const{r,d}=await j('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})});
 if(r.ok){me=d;entered()}else lerr.textContent=d.error||'Login failed'}
-async function doRegister(){lerr.textContent='';const{r,d}=await j('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})});
-if(r.ok){me=d;entered()}else lerr.textContent=d.error||'Sign up failed'}
+function showSignup(){login.style.display='none';signup.style.display='block';dash.style.display='none';out.style.display='none';serr.textContent=''}
+function pwEye(){const e=np;const s=e.type==='password';e.type=s?'text':'password';document.querySelector('.eye').textContent=s?'Hide':'Show'}
+function pwStrength(){const v=np.value;let s=0;if(v.length>=6)s++;if(v.length>=10)s++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
+const bar=meter.firstElementChild;bar.style.width=(s*20)+'%';bar.style.background=s<2?'#ff7b7b':(s<4?'#f0c674':'#7bd88f');
+mlabel.textContent=v?'Strength: '+['Very weak','Weak','Fair','Good','Strong','Excellent'][s]:''}
+async function doSignup(){serr.textContent='';const un=nu.value.trim(),pw=np.value;
+if(un.length<2)return serr.textContent='Username must be at least 2 characters';
+if(!/^[a-zA-Z0-9_-]+$/.test(un))return serr.textContent='Username: only letters, numbers, dash or underscore';
+if(pw.length<6)return serr.textContent='Password must be at least 6 characters';
+if(pw!==nc.value)return serr.textContent='Passwords do not match';
+const{r,d}=await j('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:un,password:pw})});
+if(r.ok){me=d;signup.style.display='none';entered()}else serr.textContent=d.error||'Sign up failed'}
 out.onclick=async()=>{await j('/api/logout',{method:'POST'});me=null;showLogin()};
 async function loadApps(){const{d}=await j('/api/apps');apps.innerHTML=d.map(a=>'<span class=chip>'+a.name+': '+a.status+'</span>').join('')}
 async function loadSites(){const{d}=await j('/api/sites');sitelist.innerHTML=d.map(s=>'<a class=chip href="/sites/'+s.name+'/" target=_blank style="color:#6c8cff;text-decoration:none">📦 '+s.name+'</a>').join('')}
