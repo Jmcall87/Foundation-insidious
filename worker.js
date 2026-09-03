@@ -42,7 +42,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:14p
 <header><div class=logo>foundation<span>-insidious</span></div><button id=out style="display:none;background:none;border:1px solid #2a3245;color:#9aa3b5;border-radius:8px;padding:7px 14px">Log out</button></header>
 <div id=login><h2 style=margin-bottom:14px>Sign in</h2>
 <input id=u placeholder="Username"><input id=p type=password placeholder="Password">
-<button onclick=doLogin()>Sign in</button><div class=err id=lerr></div></div>
+<button onclick=doLogin()>Sign in</button><button id=su style="background:none;border:1px solid #6c8cff;color:#6c8cff;margin-top:8px" onclick=doRegister()>Create account</button><div class=err id=lerr></div></div>
 <div id=dash><div id=apps></div>
 <div class=msgs id=msgs></div>
 <div class=row><input id=c placeholder="Ask the agent anything…" onkeydown="if(event.key=='Enter')send()">
@@ -56,6 +56,8 @@ function entered(){login.style.display='none';dash.style.display='block';out.sty
 add('a','Welcome back, '+me.username+'. Ask me anything.')}
 async function doLogin(){lerr.textContent='';const{r,d}=await j('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})});
 if(r.ok){me=d;entered()}else lerr.textContent=d.error||'Login failed'}
+async function doRegister(){lerr.textContent='';const{r,d}=await j('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})});
+if(r.ok){me=d;entered()}else lerr.textContent=d.error||'Sign up failed'}
 out.onclick=async()=>{await j('/api/logout',{method:'POST'});me=null;showLogin()};
 async function loadApps(){const{d}=await j('/api/apps');apps.innerHTML=d.map(a=>'<span class=chip>'+a.name+': '+a.status+'</span>').join('')}
 function add(who,text){const e=document.createElement('div');e.className='m '+who;e.textContent=text;msgs.appendChild(e);msgs.scrollTop=msgs.scrollHeight}
@@ -126,6 +128,21 @@ export default {
       await env.KV.put('sess:' + token, user.username, { expirationTtl: 604800 });
       return json({ ok: true, username: user.username, role: user.role }, 200,
         { 'Set-Cookie': 'fi_sess=' + token + '; HttpOnly; Secure; Path=/; Max-Age=604800; SameSite=Lax' });
+    }
+
+    if (req.method === 'POST' && path === '/api/register') {
+      const { username, password } = await req.json();
+      const name = String(username || '').trim().toLowerCase();
+      if (!/^[a-z0-9_-]{2,24}$/.test(name)) return json({ error: 'Username must be 2-24 chars (a-z, 0-9, _ -)' }, 400);
+      if (String(password || '').length < 6) return json({ error: 'Password must be at least 6 characters' }, 400);
+      if (await getUser(env, name)) return json({ error: 'Username already taken' }, 400);
+      const salt = newSalt();
+      const user = { username: name, role: 'member', salt, hash: await hashPassword(String(password || ''), salt), created: Date.now() };
+      await env.KV.put('user:' + name, JSON.stringify(user));
+      const rtoken = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
+      await env.KV.put('sess:' + rtoken, user.username, { expirationTtl: 604800 });
+      return json({ ok: true, username: user.username, role: user.role }, 200,
+        { 'Set-Cookie': 'fi_sess=' + rtoken + '; HttpOnly; Secure; Path=/; Max-Age=604800; SameSite=Lax' });
     }
 
     if (req.method === 'POST' && path === '/api/logout') {
